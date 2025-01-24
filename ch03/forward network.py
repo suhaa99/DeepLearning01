@@ -43,5 +43,5 @@ def softmax(y):
 network = init_network()
 x = np.array([1.0, 0.5])
 y = forward(network, x)
-z = softmax(y)   # the answer is different between using softmax and not using it..
+z = softmax(y)   
 print(z)
