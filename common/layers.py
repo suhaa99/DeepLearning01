@@ -132,15 +132,15 @@ class BatchNormalization:
         self.dgamma = None
         self.dbeta = None
 
-    def forward(self, x, train_flg=True):
+    def forward(self, x, train_flg=True):  # train_flg : 훈련할 때 평균, 표준편차 구하기 위함, test시 false
         self.input_shape = x.shape
-        if x.ndim != 2:
-            N, C, H, W = x.shape
-            x = x.reshape(N, -1)
+        if x.ndim != 2:           # 이후 4차원 사용 예정
+            N, C, H, W = x.shape  # N : 배치 개수, C : 채널(RGB), H : height, W : width
+            x = x.reshape(N, -1)  # N*M 2차원 행렬로 변환
 
         out = self.__forward(x, train_flg)
         
-        return out.reshape(*self.input_shape)
+        return out.reshape(*self.input_shape)  # * : 괄호 없애기
             
     def __forward(self, x, train_flg):
         if self.running_mean is None:
@@ -148,7 +148,7 @@ class BatchNormalization:
             self.running_mean = np.zeros(D)
             self.running_var = np.zeros(D)
                         
-        if train_flg:
+        if train_flg:    # train할 때
             mu = x.mean(axis=0)
             xc = x - mu
             var = np.mean(xc**2, axis=0)
@@ -161,7 +161,7 @@ class BatchNormalization:
             self.std = std
             self.running_mean = self.momentum * self.running_mean + (1-self.momentum) * mu
             self.running_var = self.momentum * self.running_var + (1-self.momentum) * var            
-        else:
+        else:            # test할 때
             xc = x - self.running_mean
             xn = xc / ((np.sqrt(self.running_var + 10e-7)))
             
@@ -179,14 +179,14 @@ class BatchNormalization:
         return dx
 
     def __backward(self, dout):
-        dbeta = dout.sum(axis=0)
-        dgamma = np.sum(self.xn * dout, axis=0)
+        dbeta = dout.sum(axis=0)                     # repeat-sum NODE
+        dgamma = np.sum(self.xn * dout, axis=0)      # repeat-sum NODE
         dxn = self.gamma * dout
         dxc = dxn / self.std
-        dstd = -np.sum((dxn * self.xc) / (self.std * self.std), axis=0)
+        dstd = -np.sum((dxn * self.xc) / (self.std * self.std), axis=0)   # repeat-sum NODE
         dvar = 0.5 * dstd / self.std
         dxc += (2.0 / self.batch_size) * self.xc * dvar
-        dmu = np.sum(dxc, axis=0)
+        dmu = np.sum(dxc, axis=0)                    # repeat-sum NODE
         dx = dxc - dmu / self.batch_size
         
         self.dgamma = dgamma
