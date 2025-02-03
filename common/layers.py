@@ -102,8 +102,9 @@ class Dropout:
 
     def forward(self, x, train_flg=True):
         if train_flg:
+            # self.mask -> True, False Matrix / * : 괄호 없애기 / rand : [0,1)
             self.mask = np.random.rand(*x.shape) > self.dropout_ratio
-            return x * self.mask
+            return x * self.mask  # false인 부분 0으로, 부분삭제
         else:
             return x * (1.0 - self.dropout_ratio)
 
