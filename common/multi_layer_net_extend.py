@@ -1,5 +1,6 @@
 # coding: utf-8
 import sys, os
+sys.path.append(r'C:/Users/장수하/OneDrive/문서/GitHub/DeepLearning01')
 sys.path.append(os.pardir) # 부모 디렉터리의 파일을 가져올 수 있도록 설정
 import numpy as np
 from collections import OrderedDict
@@ -40,9 +41,20 @@ class MultiLayerNetExtend:
         self.__init_weight(weight_init_std)
 
         # 계층 생성
+        # params = {W1 : [784,100] : N(0, 2/784), b1 : [1,100], r1 : [1,...,1], beta1 : [0,...,0]
+        #           W2 : [100,100] : N(0, 2/100), b2 : [1,100], r2 : [1,...,1], beta2 : [0,...,0]
+        #           W3 : [100,100] : N(0, 2/100), b3 : [1,100], r3 : [1,...,1], beta3 : [0,...,0]
+        #           W4 : [100,10]  : N(0,2/100),  b4 : [1,100] }
+        # layers = { Affine 1 : Affine(W1,b1) 인스턴스, BatchNorm1 : BatchNormalization(r1, beta1) 인스턴스
+        #            Activation_function1 : Relu() 인스턴스, Dropout1 : Dropout(p) 인스턴스
+        #            Affine 2 : Affine(W2,b2) 인스턴스, BatchNorm2 : BatchNormalization(r2, beta2) 인스턴스
+        #            Activation_function2 : Relu() 인스턴스, Dropout2 : Dropout(p) 인스턴스
+        #            Affine 3 : Affine(W3, b3) 인스턴스, BatchNorm3 : BatchNormalization(r3, beta3) 인스턴스
+        #            Activation_function3 : Relu() 인스턴스, Dropout3 : Dropout(p) 인스턴스
+        #            Affine 4 : Affine(W4, b4) 인스턴스 }
         activation_layer = {'sigmoid': Sigmoid, 'relu': Relu}
         self.layers = OrderedDict()
-        for idx in range(1, self.hidden_layer_num+1):
+        for idx in range(1, self.hidden_layer_num+1):  # [1,4)
             self.layers['Affine' + str(idx)] = Affine(self.params['W' + str(idx)],
                                                       self.params['b' + str(idx)])
             if self.use_batchnorm:
@@ -82,7 +94,7 @@ class MultiLayerNetExtend:
     def predict(self, x, train_flg=False):
         for key, layer in self.layers.items():
             if "Dropout" in key or "BatchNorm" in key:
-                x = layer.forward(x, train_flg)
+                x = layer.forward(x, train_flg)  # train_flg = True일때 작동
             else:
                 x = layer.forward(x)
 
@@ -154,8 +166,12 @@ class MultiLayerNetExtend:
             dout = layer.backward(dout)
 
         # 결과 저장
+        # grads = {W1 : dLc/dW1 + lambda*W1 = dL/dW1, b1 : dLc/db1 = dL/db1, r1 : dLc/dr1, beta1 : dLc/dbeta1
+        #          W2 : dLc/dW2 + lambda*W2 = dL/dW2, b2 : dLc/db2 = dL/db2, r2 : dLc/dr2, beta2 : dLc/dbeta2
+        #          W3 : dLc/dW3 + lambda*W3 = dL/dW3, b3 : dLc/db3 = dL/db3, r3 : dLc/dr3, beta3 : dLc/dbeta3
+        #          W4 : dLc/dW4 + lambda*W4 = dL/dW4, b4 : dLc/db4 = dL/db4 }
         grads = {}
-        for idx in range(1, self.hidden_layer_num+2):
+        for idx in range(1, self.hidden_layer_num+2):  # [1,4) 
             grads['W' + str(idx)] = self.layers['Affine' + str(idx)].dW + self.weight_decay_lambda * self.params['W' + str(idx)]
             grads['b' + str(idx)] = self.layers['Affine' + str(idx)].db
 

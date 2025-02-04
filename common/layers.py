@@ -122,7 +122,7 @@ class BatchNormalization:
         self.momentum = momentum
         self.input_shape = None # 합성곱 계층은 4차원, 완전연결 계층은 2차원  
 
-        # 시험할 때 사용할 평균과 분산
+        # 시험할 때 사용할 평균과 분산(훈련시 업데이트됨)
         self.running_mean = running_mean
         self.running_var = running_var  
         
