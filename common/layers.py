@@ -1,7 +1,10 @@
 # coding: utf-8
+import sys
+sys.path.append(r'C:/Users/장수하/OneDrive/문서/GitHub/DeepLearning01')
 import numpy as np
 from common.functions import *
 from common.util import im2col, col2im
+
 
 
 class Relu:
@@ -197,7 +200,7 @@ class BatchNormalization:
 
 
 class Convolution:
-    def __init__(self, W, b, stride=1, pad=0):
+    def __init__(self, W, b, stride=1, pad=0):  # W : filter
         self.W = W
         self.b = b
         self.stride = stride
@@ -215,8 +218,8 @@ class Convolution:
     def forward(self, x):
         FN, C, FH, FW = self.W.shape
         N, C, H, W = x.shape
-        out_h = 1 + int((H + 2*self.pad - FH) / self.stride)
-        out_w = 1 + int((W + 2*self.pad - FW) / self.stride)
+        out_h = 1 + int((H + 2*self.pad - FH) / self.stride)  # output height
+        out_w = 1 + int((W + 2*self.pad - FW) / self.stride)  # output width
 
         col = im2col(x, FH, FW, self.stride, self.pad)
         col_W = self.W.reshape(FN, -1).T
@@ -232,10 +235,14 @@ class Convolution:
 
     def backward(self, dout):
         FN, C, FH, FW = self.W.shape
+        # 흘러들어온 미분의 reshape
         dout = dout.transpose(0,2,3,1).reshape(-1, FN)
 
-        self.db = np.sum(dout, axis=0)
+        # b(편향)에 대한 미분
+        self.db = np.sum(dout, axis=0)   # axis=0 : b 순전파시 repeat node -> b 역전파시 sum node
+        # 필터에 대한 미분
         self.dW = np.dot(self.col.T, dout)
+        # 데이터에 대한 미분
         self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
 
         dcol = np.dot(dout, self.col_W.T)

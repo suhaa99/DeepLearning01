@@ -69,6 +69,7 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
 
 
 def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
+    # col : 흘러들어오는 미분, input_shape : im2col에 들어오는 데이터 shape
     """(im2col과 반대) 2차원 배열을 입력받아 다수의 이미지 묶음으로 변환한다.
     
     Parameters
