@@ -266,11 +266,16 @@ class Pooling:
         out_h = int(1 + (H - self.pool_h) / self.stride)
         out_w = int(1 + (W - self.pool_w) / self.stride)
 
+        # 1) im2col
         col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
+        # 2) 열이 PH*PW가 되도록 reshape
         col = col.reshape(-1, self.pool_h*self.pool_w)
 
+        # 역전파시 사용
         arg_max = np.argmax(col, axis=1)
+        # 3) 각 행의 최대값 도출
         out = np.max(col, axis=1)
+        # 4) N*OH*OW*C reshape, transpose(0,3,2,1)
         out = out.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
 
         self.x = x
@@ -279,14 +284,23 @@ class Pooling:
         return out
 
     def backward(self, dout):
+        # 1) transpose(0,2,3,1)
         dout = dout.transpose(0, 2, 3, 1)
         
+        # 2) dmax 배열 생성
         pool_size = self.pool_h * self.pool_w
-        dmax = np.zeros((dout.size, pool_size))
+        dmax = np.zeros((dout.size, pool_size))  # .size : 항(픽셀)의 갯수
+        
+        # 3) flatten
+        # arg_max : 최댓값이 선정된 위치(인덱스값)
+        # don't understand..
         dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
         dmax = dmax.reshape(dout.shape + (pool_size,)) 
         
+        # 4) reshape(N*OH*OW, -1)
+        # dmax.shape[0] : N, dmax.shape[1] : OH, dmax.shape[2] : OW
         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
+        # 5) col2im
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
         
         return dx
