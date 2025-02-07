@@ -293,7 +293,6 @@ class Pooling:
         
         # 3) flatten
         # arg_max : 최댓값이 선정된 위치(인덱스값)
-        # don't understand..
         dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
         dmax = dmax.reshape(dout.shape + (pool_size,)) 
         
